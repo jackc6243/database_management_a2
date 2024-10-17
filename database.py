@@ -41,6 +41,11 @@ Validate staff based on username and password
 def checkLogin(username, password):
     try:
         conn = openConnection()
+    except:
+        print("Cannot open connection")
+        return None
+
+    try:
         curs = conn.cursor()
 
         curs.execute("""
@@ -57,12 +62,10 @@ def checkLogin(username, password):
             return None
         return [row[0], row[2], row[3], row[4]]
     except psycopg2.Error as sqle:
-        print("failed")
-        app = Flask(__name__)
-        app.logger.info("failed")
+        print("failed1")
         return None
     finally:
-        print("failed")
+        print("failed3")
         curs.close()
         conn.close()
 
