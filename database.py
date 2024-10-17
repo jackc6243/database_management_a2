@@ -105,36 +105,39 @@ def findAdmissionsByCriteria(searchString):
                         ad.AdmissionID,
                         adT.AdmissionTypeName,
                         dep.DeptName,
-                        ad.DischargeDate,
+                        ad.DischargeDate as dis_date,
                         ad.Fee,
-                        p.FirstName,
-                        p.LastName,
+                        concat(p.FirstName, ' ', p.LastName) as full_name,
                         ad.condition
                     FROM Admission ad
                     JOIN AdmissionType adT on (adT.AdmissionTypeID = ad.admissiontype)
                     join Department dep on (dep.DeptId = ad.Department)
                     join patient p on (ad.Patient = p.PatientID)
                     where
-                        (adT.AdmissionTypeName like %s) or
-                        (dep.DeptName like %s) or
-                        (p.FirstName like %s) or
-                        (p.LastName like %s) or
-                        (ad.condition like %s)
+                        (lower(adT.AdmissionTypeName) like %s) or
+                        (lower(dep.DeptName) like %s) or
+                        (lower(p.FirstName) like %s) or
+                        (lower(p.LastName) like %s) or
+                        (lower(ad.condition) like %s)
+                    order by
+                        full_name asc,
+                        dis_date asc,
+                        
                      """, (searchString, searchString, searchString, searchString, searchString,))
 
         rows = []
-        row = True
+        row = curs.fetchone()
         while row is not None:
-            row = curs.fetchone()
             rows.append({
                 'admission_id': row[0],
                 'admission_type': row[1],
                 'admission_department': row[2],
                 'discharge_date': row[3],
                 'fee': row[4],
-                'patient': f"{row[5]} {row[6]}",
-                'condition': row[7]
+                'patient': row[5],
+                'condition': row[6],
             })
+            row = curs.fetchone()
         return rows
     except psycopg2.Error as sqle:
         print(sqle)
