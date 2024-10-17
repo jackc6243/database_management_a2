@@ -39,6 +39,7 @@ Validate staff based on username and password
 
 
 def checkLogin(username, password):
+    conn = None
     try:
         conn = openConnection()
     except:
@@ -47,23 +48,19 @@ def checkLogin(username, password):
         return None
 
     try:
-        print("1")
         curs = conn.cursor()
-        print("2")
         curs.execute("""
                      SELECT *
                      FROM Administrator
                      WHERE UserName = %s
                      AND password = %s
                      """, (username, password,))
-        print("3")
         row = curs.fetchone()
-        print("4")
         if row is None:
             return None
         return [row[0], row[2], row[3], row[4]]
     except psycopg2.Error as sqle:
-        print("psycog2.error")
+        print(sqle)
         return None
     finally:
         print("finally block")
