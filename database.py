@@ -140,7 +140,7 @@ def findAdmissionsByCriteria(searchString):
                         ad.AdmissionID,
                         adT.AdmissionTypeName,
                         dep.DeptName,
-                        ad.DischargeDate as dis_date,
+                        TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as dis_date,
                         ad.Fee,
                         concat(p.FirstName, ' ', p.LastName) as full_name,
                         ad.condition
@@ -195,20 +195,46 @@ Add a new addmission
 def addAdmission(type, department, patient, condition, admin):
     conn = openConnection()
     if conn is None:
-        return None
+        return False
 
     try:
         curs = conn.cursor()
         curs.execute("""
-                     SELECT *
-                     FROM Administrator
-                     WHERE UserName = %s
-                     AND password = %s
-                     """, (type, department, patient, condition, admin,))
+                     SELECT AdmissionTypeID
+                     FROM AdmissionType
+                     WHERE lower(AdmissionTypeName) = lower(%s)
+                     """, (type,))
+        res = curs.fetchone()
+        if res is None:
+            print("Admission type not found")
+            return False
+        type_id = res[0]
+
+        curs.execute("""
+                     SELECT DeptId
+                     FROM Department
+                     WHERE lower(DeptName) = lower(%s)
+                     """, (department,))
+        res = curs.fetchone()
+        if res is None:
+            print("Department name not found")
+            return False
+        dep_id = res[0]
+
+        curs.execute("""
+                    insert into admission
+                    (AdmissionType, Department, Patient, Administrator, Condition) VALUES
+                    (%s, %s, %s, %s, %s);
+                     """, (type_id, dep_id, patient.lower(), admin, condition))
+        conn.commit()
+        return True
 
     except psycopg2.Error as sqle:
+        if conn:
+            conn.rollback()
+        print("Add admission error is:")
         print(sqle)
-        return None
+        return False
     finally:
         print("finally block")
         curs.close()
