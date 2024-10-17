@@ -156,26 +156,30 @@ def findAdmissionsByCriteria(searchString):
                         (lower(ad.condition) like %s)
                     order by
                         full_name asc,
-                        dis_date asc,
-                        
+                        dis_date asc
                      """, (searchString, searchString, searchString, searchString, searchString,))
 
-        rows = []
+        rows_no_discharge = []
+        rows_discharge = []
         row = curs.fetchone()
         while row is not None:
-            rows.append({
+            temp = {
                 'admission_id': row[0],
                 'admission_type': row[1],
                 'admission_department': row[2],
-                'discharge_date': row[3],
-                'fee': row[4],
+                'discharge_date': row[3] if row[3] else "",
+                'fee': row[4] if row[4] else "",
                 'patient': row[5],
-                'condition': row[6],
-            })
+                'condition': row[6] if row[6] else "",
+            }
+            if row[3] is None:
+                rows_no_discharge.append(temp)
+            else:
+                rows_discharge.append(temp)
             row = curs.fetchone()
-        return rows
+        return rows_no_discharge + rows_discharge
     except psycopg2.Error as sqle:
-        print(sqle)
+        print("sqle error", sqle)
         return None
     finally:
         print("finally block")
