@@ -43,29 +43,30 @@ def checkLogin(username, password):
         conn = openConnection()
     except:
         print("Cannot open connection")
+        conn.close()
         return None
 
     try:
+        print("1")
         curs = conn.cursor()
-
+        print("2")
         curs.execute("""
-                     select *
-                     from Administrator
-                     where UserName = %s
-                     and password = %s
-                     """, (username, password))
+                     SELECT *
+                     FROM Administrator
+                     WHERE UserName = %s
+                     AND password = %s
+                     """, (username, password,))
+        print("3")
         row = curs.fetchone()
-        print(row, flush=True)
-        app = Flask(__name__)
-        app.logger.info(row)
+        print("4")
         if row is None:
             return None
         return [row[0], row[2], row[3], row[4]]
     except psycopg2.Error as sqle:
-        print("failed1")
+        print("psycog2.error")
         return None
     finally:
-        print("failed3")
+        print("finally block")
         curs.close()
         conn.close()
 
