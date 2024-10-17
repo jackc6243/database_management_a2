@@ -37,7 +37,7 @@ def openConnection():
                                 host=myHost)
 
     except psycopg2.Error as sqle:
-        print("psycopg2.Error : " + sqle.pgerror)
+        print("psycopg2.Error : ", sqle)
 
     # return the connection to use
     return conn
@@ -49,12 +49,8 @@ Validate staff based on username and password
 
 
 def checkLogin(username, password):
-    conn = None
-    try:
-        conn = openConnection()
-    except:
-        print("Cannot open connection")
-        conn.close()
+    conn = openConnection()
+    if conn is None:
         return None
 
     try:
@@ -97,8 +93,49 @@ See assignment description for search specification
 
 
 def findAdmissionsByCriteria(searchString):
+    conn = openConnection()
+    if conn is None:
+        return None
 
-    return
+    try:
+        curs = conn.cursor()
+        searchString = f"%{searchString}%"
+        curs.execute("""
+                    SELECT
+                        ad.AdmissionID,
+                        adT.AdmissionTypeName,
+                        dep.DeptName,
+                        ad.DischargeDate,
+                        ad.Fee,
+                        p.FirstName,
+                        p.LastName,
+                        ad.condition
+                    FROM Admission ad
+                    JOIN AdmissionType adT on (adT.AdmissionTypeID = ad.admissiontype)
+                    join Department dep on (dep.DeptId = ad.Department)
+                    join patient p on (ad.Patient = p.PatientID)
+                    where
+                        (adT.AdmissionTypeName like %s) or
+                        (dep.DeptName like %s) or
+                        (p.FirstName like %s) or
+                        (p.LastName like %s) or
+                        (ad.condition like %s)
+                     """, (searchString, searchString, searchString, searchString, searchString,))
+
+        rows = []
+        row = True
+        while row:
+            row = curs.fetchone()
+            rows.append([row[0], row[1], row[2], row[3],
+                        row[4], f"{row[5]} {row[6]}", row[7]])
+        return rows
+    except psycopg2.Error as sqle:
+        print(sqle)
+        return None
+    finally:
+        print("finally block")
+        curs.close()
+        conn.close()
 
 
 '''
@@ -107,8 +144,26 @@ Add a new addmission
 
 
 def addAdmission(type, department, patient, condition, admin):
+    conn = openConnection()
+    if conn is None:
+        return None
 
-    return
+    try:
+        curs = conn.cursor()
+        curs.execute("""
+                     SELECT *
+                     FROM Administrator
+                     WHERE UserName = %s
+                     AND password = %s
+                     """, (type, department, patient, condition, admin,))
+
+    except psycopg2.Error as sqle:
+        print(sqle)
+        return None
+    finally:
+        print("finally block")
+        curs.close()
+        conn.close()
 
 
 '''
