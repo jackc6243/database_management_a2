@@ -82,8 +82,43 @@ List all the associated admissions records in the database by staff
 
 
 def findAdmissionsByAdmin(login):
+    conn = openConnection()
+    if conn is None:
+        return None
 
-    return
+    try:
+        curs = conn.cursor()
+        curs.execute("""
+            select AdmissionID, AdmissionTypeName, Department, DischargeDate, Fee, concat(FirstName, ' ', LastName) as PatientName, Condition
+            from Admission join Patient on (Patient = PatientID) join AdmissionType on (AdmissionType = AdmissionTypeID)
+            where Administrator = %s 
+            order by DischargeDate desc nulls last, PatientName asc, AdmissionType desc
+        """, (login,))
+
+        rows = []
+        row = curs.fetchone()
+        while row is not None:
+            admission = {
+                'admission_id': row[0],
+                'admission_type': row[1],
+                'admission_department': row[2],
+                'discharge_date': row[3] if row[3] else '',
+                'fee': row[4] if row[4] else '',
+                'patient': row[5],
+                'condition': row[6] if row[6] else ''
+            }
+            rows.append(admission)
+            row = curs.fetchone()
+
+        return rows
+
+    except psycopg2.Error as sqle:
+        print(sqle)
+        return None
+    finally:
+        print("finally block")
+        curs.close()
+        conn.close()
 
 
 '''
