@@ -11,12 +11,22 @@ Connect to the database using the connection string
 '''
 
 
+def read_credentials():
+    userid = None
+    password = None
+
+    with open('./secrets.txt', 'r') as f:
+        lines = f.readlines()
+        userid = lines[0].strip()
+        password = lines[1].strip()
+
+    return userid, password
+
+
 def openConnection():
     # connection parameters - ENTER YOUR LOGIN AND PASSWORD HERE
-    userid = "y24s2c9120_zchu0372"
-    passwd = "7wtEeXg4"
+    userid, passwd = read_credentials()
     myHost = "awsprddbs4836.shared.sydney.edu.au"
-
     # Create a connection to the database
     conn = None
     try:
