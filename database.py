@@ -124,10 +124,17 @@ def findAdmissionsByCriteria(searchString):
 
         rows = []
         row = True
-        while row:
+        while row is not None:
             row = curs.fetchone()
-            rows.append([row[0], row[1], row[2], row[3],
-                        row[4], f"{row[5]} {row[6]}", row[7]])
+            rows.append({
+                'admission_id': row[0],
+                'admission_type': row[1],
+                'admission_department': row[2],
+                'discharge_date': row[3],
+                'fee': row[4],
+                'patient': f"{row[5]} {row[6]}",
+                'condition': row[7]
+            })
         return rows
     except psycopg2.Error as sqle:
         print(sqle)
