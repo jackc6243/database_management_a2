@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import psycopg2
+from flask import Flask
 
 #####################################################
 # Database Connection
@@ -12,8 +13,8 @@ Connect to the database using the connection string
 
 def openConnection():
     # connection parameters - ENTER YOUR LOGIN AND PASSWORD HERE
-    userid = "y24s2c9120_unikey"
-    passwd = ""
+    userid = "y24s2c9120_zchu0372"
+    passwd = "7wtEeXg4"
     myHost = "awsprddbs4836.shared.sydney.edu.au"
 
     # Create a connection to the database
@@ -37,18 +38,35 @@ Validate staff based on username and password
 '''
 
 
-def checkLogin(login, password):
+def checkLogin(username, password):
     try:
         conn = openConnection()
         curs = conn.cursor()
 
+        curs.execute("""
+                     select *
+                     from Administrator
+                     where UserName = %s
+                     and password = %s
+                     """, (username, password))
+        row = curs.fetchone()
+        print(row, flush=True)
+        app = Flask(__name__)
+        app.logger.info(row)
+        if row is None:
+            return None
+        return [row[0], row[2], row[3], row[4]]
     except psycopg2.Error as sqle:
+        print("failed")
+        app = Flask(__name__)
+        app.logger.info("failed")
         return None
     finally:
+        print("failed")
         curs.close()
         conn.close()
 
-    return ['jdoe', 'John', 'Doe', 'jdoe@csh.com']
+    # return ['jdoe', 'John', 'Doe', 'jdoe@csh.com']
 
 
 '''
