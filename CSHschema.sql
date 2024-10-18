@@ -110,8 +110,8 @@ BEGIN
     SELECT
         a.AdmissionID,
         at.AdmissionTypeName,
-        dep.Department,
-        TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as DischargeDate,
+        dep.DeptName,
+        TO_CHAR(a.DischargeDate, 'DD-MM-YYYY') as DischargeDate,
         a.Fee,
         CONCAT(p.FirstName, ' ', p.LastName) AS PatientName,
         a.Condition
@@ -127,7 +127,6 @@ BEGIN
         CONCAT(p.FirstName, ' ', p.LastName) ASC, 
         a.AdmissionType DESC;
 END; $$ ;
-
 
 CREATE OR REPLACE FUNCTION findAdmissionsByCriteria(search_term TEXT)
 RETURNS TABLE (
