@@ -4,6 +4,8 @@ DROP TABLE IF EXISTS AdmissionType;
 DROP TABLE IF EXISTS Department;
 DROP TABLE IF EXISTS Admission;
 
+-- hello s
+
 CREATE TABLE Administrator (
     UserName VARCHAR(10) PRIMARY KEY,
     Password VARCHAR(20) NOT NULL,
