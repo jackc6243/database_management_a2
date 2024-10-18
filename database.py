@@ -88,12 +88,13 @@ def findAdmissionsByAdmin(login):
 
     try:
         curs = conn.cursor()
-        curs.execute("""
-            select AdmissionID, AdmissionTypeName, Department, DischargeDate, Fee, concat(FirstName, ' ', LastName) as PatientName, Condition
-            from Admission join Patient on (Patient = PatientID) join AdmissionType on (AdmissionType = AdmissionTypeID)
-            where Administrator = %s 
-            order by DischargeDate desc nulls last, PatientName asc, AdmissionType desc
-        """, (login,))
+        curs.callproc('findAdmissionsByAdmin', [login])
+        # curs.execute("""
+        #     select AdmissionID, AdmissionTypeName, Department, DischargeDate, Fee, concat(FirstName, ' ', LastName) as PatientName, Condition
+        #     from Admission join Patient on (Patient = PatientID) join AdmissionType on (AdmissionType = AdmissionTypeID)
+        #     where Administrator = %s
+        #     order by DischargeDate desc nulls last, PatientName asc, AdmissionType desc
+        # """, (login,))
 
         rows = []
         row = curs.fetchone()
@@ -134,36 +135,37 @@ def findAdmissionsByCriteria(searchString):
 
     try:
         curs = conn.cursor()
-        searchString = f"%{searchString}%"
-        curs.execute("""
-                    SELECT
-                        ad.AdmissionID,
-                        adT.AdmissionTypeName,
-                        dep.DeptName,
-                        TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as dis_date,
-                        ad.Fee,
-                        concat(p.FirstName, ' ', p.LastName) as full_name,
-                        ad.condition
-                    FROM Admission ad
-                    JOIN AdmissionType adT on (adT.AdmissionTypeID = ad.admissiontype)
-                    join Department dep on (dep.DeptId = ad.Department)
-                    join patient p on (ad.Patient = p.PatientID)
-                    where
-                        (lower(adT.AdmissionTypeName) like %s) or
-                        (lower(dep.DeptName) like %s) or
-                        (lower(p.FirstName) like %s) or
-                        (lower(p.LastName) like %s) or
-                        (lower(ad.condition) like %s)
-                    order by
-                        full_name asc,
-                        dis_date asc
-                     """, (searchString, searchString, searchString, searchString, searchString,))
+        # searchString = f"%{searchString}%"
 
-        rows_no_discharge = []
-        rows_discharge = []
+        curs.callproc('findAdmissionsByCriteria', [searchString])
+        # curs.execute("""
+        #             SELECT
+        #                 ad.AdmissionID,
+        #                 adT.AdmissionTypeName,
+        #                 dep.DeptName,
+        #                 TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as dis_date,
+        #                 ad.Fee,
+        #                 concat(p.FirstName, ' ', p.LastName) as full_name,
+        #                 ad.condition
+        #             FROM Admission ad
+        #             JOIN AdmissionType adT on (adT.AdmissionTypeID = ad.admissiontype)
+        #             join Department dep on (dep.DeptId = ad.Department)
+        #             join patient p on (ad.Patient = p.PatientID)
+        #             where
+        #                 (lower(adT.AdmissionTypeName) like %s) or
+        #                 (lower(dep.DeptName) like %s) or
+        #                 (lower(p.FirstName) like %s) or
+        #                 (lower(p.LastName) like %s) or
+        #                 (lower(ad.condition) like %s)
+        #             order by
+        #                 to_char(ad.DischargeDate, 'YYYY-MM-DD') desc nulls first,
+        #                 full_name asc
+        #              """, (searchString, searchString, searchString, searchString, searchString,))
+
+        rows = []
         row = curs.fetchone()
         while row is not None:
-            temp = {
+            rows.append({
                 'admission_id': row[0],
                 'admission_type': row[1],
                 'admission_department': row[2],
@@ -171,13 +173,9 @@ def findAdmissionsByCriteria(searchString):
                 'fee': row[4] if row[4] else "",
                 'patient': row[5],
                 'condition': row[6] if row[6] else "",
-            }
-            if row[3] is None:
-                rows_no_discharge.append(temp)
-            else:
-                rows_discharge.append(temp)
+            })
             row = curs.fetchone()
-        return rows_no_discharge + rows_discharge
+        return rows
     except psycopg2.Error as sqle:
         print("sqle error", sqle)
         return None
@@ -199,6 +197,8 @@ def addAdmission(type, department, patient, condition, admin):
 
     try:
         curs = conn.cursor()
+
+        # Check if admission type is valid, if so obtain the admission type id
         curs.execute("""
                      SELECT AdmissionTypeID
                      FROM AdmissionType
@@ -210,6 +210,7 @@ def addAdmission(type, department, patient, condition, admin):
             return False
         type_id = res[0]
 
+        # check if department name is valid, if so obtai the department id
         curs.execute("""
                      SELECT DeptId
                      FROM Department
@@ -221,6 +222,7 @@ def addAdmission(type, department, patient, condition, admin):
             return False
         dep_id = res[0]
 
+        # insert into admissions
         curs.execute("""
                     insert into admission
                     (AdmissionType, Department, Patient, Administrator, Condition) VALUES

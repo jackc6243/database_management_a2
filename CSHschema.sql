@@ -90,3 +90,75 @@ INSERT INTO Admission (AdmissionType, Department, Fee, Patient, Administrator, D
 	(4, 1, 75.00, 'gthomas', 'bbrown', '19/11/2023', 'Routine general practitioner consultation for a follow-up after a recent bout of seasonal allergies.'),
 	(3, 3, 7000.50, 'smartinez', 'jdoe', '15/10/2024', NULL),
 	(1, 2, NULL, 'etylor', 'jdoe', NULL, 'I am having intense, crushing pain in my chest that feels like an elephant is sitting on it. It is spreading to my left arm and neck.');
+
+CREATE OR REPLACE FUNCTION findAdmissionsByAdmin(admin TEXT)
+RETURNS TABLE (
+    AdmissionID INTEGER,
+    AdmissionTypeName VARCHAR(20),
+    Department VARCHAR(20),
+    DischargeDate TEXT,
+    Fee Decimal(7,2),
+    PatientName TEXT,
+    Condition VARCHAR(500)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        a.AdmissionID,
+        at.AdmissionTypeName,
+        a.Department,
+        TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as DischargeDate,
+        a.Fee,
+        CONCAT(p.FirstName, ' ', p.LastName) AS PatientName,
+        a.Condition
+    FROM
+        Admission a
+        JOIN Patient p ON (a.Patient = p.PatientID) 
+        JOIN AdmissionType at ON (a.AdmissionType = at.AdmissionTypeID)
+    WHERE 
+        a.Administrator = admin
+    ORDER BY 
+        a.DischargeDate DESC NULLS LAST, 
+        CONCAT(p.FirstName, ' ', p.LastName) ASC, 
+        a.AdmissionType DESC;
+END; $$ ;
+
+
+CREATE OR REPLACE FUNCTION findAdmissionsByCriteria(search_term TEXT)
+RETURNS TABLE (
+    AdmissionID INTEGER,
+    AdmissionTypeName VARCHAR(20),
+    DeptName VARCHAR(50),
+    DischargeDate TEXT,
+    Fee DECIMAL(7,2),
+    FullName TEXT,
+    Condition VARCHAR(500)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        ad.AdmissionID,
+        adT.AdmissionTypeName,
+        dep.DeptName,
+        TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as DischargeDate,
+        ad.Fee,
+        CONCAT(p.FirstName, ' ', p.LastName) as FullName,
+        ad.condition
+    FROM Admission ad
+    JOIN AdmissionType adT ON (adT.AdmissionTypeID = ad.admissiontype)
+    JOIN Department dep ON (dep.DeptId = ad.Department)
+    JOIN Patient p ON (ad.Patient = p.PatientID)
+    WHERE
+        LOWER(adT.AdmissionTypeName) LIKE '%' || LOWER(search_term) || '%' OR
+        LOWER(dep.DeptName) LIKE '%' || LOWER(search_term) || '%' OR
+        LOWER(p.FirstName) LIKE '%' || LOWER(search_term) || '%' OR
+        LOWER(p.LastName) LIKE '%' || LOWER(search_term) || '%' OR
+        LOWER(ad.condition) LIKE '%' || LOWER(search_term) || '%'
+    ORDER BY
+        COALESCE(ad.DischargeDate, '9999-12-31'::DATE) DESC,
+        CONCAT(p.FirstName, ' ', p.LastName) ASC;
+END; $$ ;
