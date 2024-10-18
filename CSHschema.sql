@@ -108,7 +108,7 @@ BEGIN
     SELECT
         a.AdmissionID,
         at.AdmissionTypeName,
-        a.Department,
+        dep.Department,
         TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as DischargeDate,
         a.Fee,
         CONCAT(p.FirstName, ' ', p.LastName) AS PatientName,
@@ -117,6 +117,7 @@ BEGIN
         Admission a
         JOIN Patient p ON (a.Patient = p.PatientID) 
         JOIN AdmissionType at ON (a.AdmissionType = at.AdmissionTypeID)
+        JOIN Department dep ON (a.Department = dep.DeptId)
     WHERE 
         a.Administrator = admin
     ORDER BY 
