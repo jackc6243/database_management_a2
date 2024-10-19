@@ -27,6 +27,7 @@ def openConnection():
     # connection parameters - ENTER YOUR LOGIN AND PASSWORD HERE
     userid, passwd = read_credentials()
     myHost = "awsprddbs4836.shared.sydney.edu.au"
+
     # Create a connection to the database
     conn = None
     try:
@@ -247,7 +248,63 @@ def addAdmission(type, department, patient, condition, admin):
 Update an existing admission
 '''
 
-
 def updateAdmission(id, type, department, dischargeDate, fee, patient, condition):
+    conn = openConnection()
+    if conn is None:
+        return None
+
+    try:
+        curs = conn.cursor()
+
+        # Check if admission type is valid, if so obtain the admission type id
+        curs.execute("""
+                     SELECT AdmissionTypeID
+                     FROM AdmissionType
+                     WHERE lower(AdmissionTypeName) = lower(%s)
+                     """, (type,))
+        res = curs.fetchone()
+        if res is None:
+            print("Admission type not found")
+            return False
+        type_id = res[0]
+
+        # check if department name is valid, if so obtai the department id
+        curs.execute("""
+                     SELECT DeptId
+                     FROM Department
+                     WHERE lower(DeptName) = lower(%s)
+                     """, (department,))
+        res = curs.fetchone()
+        if res is None:
+            print("Department name not found")
+            return False
+        dep_id = res[0]
+
+        date = None
+        if dischargeDate is not None:
+            print(dischargeDate)
+            y = dischargeDate.split('-')
+            # y.reverse()
+            date = '/'.join(y)
+            print(date)
+
+        curs.execute("""
+            update Admission
+            set AdmissionType = %s, 
+                Department = %s, 
+                DischargeDate = %s, 
+                Fee = %s, 
+                Patient = lower(%s), 
+                Condition = %s
+            where AdmissionID = %s
+        """, (type_id, dep_id, date, fee, patient, condition, id,))
+
+    except psycopg2.Error as sqle:
+        print(sqle)
+        return False
+    finally:
+        print("finally block")
+        curs.close()
+        conn.close()
 
     return
