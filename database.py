@@ -248,6 +248,7 @@ def addAdmission(type, department, patient, condition, admin):
 Update an existing admission
 '''
 
+
 def updateAdmission(id, type, department, dischargeDate, fee, patient, condition):
     conn = openConnection()
     if conn is None:
@@ -288,6 +289,13 @@ def updateAdmission(id, type, department, dischargeDate, fee, patient, condition
             date = '/'.join(y)
             print(date)
 
+        # curs.execute("SET datestyle = 'DMY';")
+        # conn.commit()
+        # curs.execute("""
+        #              Update Admission (AdmissionType, Department, Fee, Patient, Administrator, DischargeDate, Condition) VALUES
+        #             (%s, %s, %s, %s, %s, %s, %s),
+        #              """,(type_id, dep_id, date, fee, patient, condition, id,))
+
         curs.execute("""
             update Admission
             set AdmissionType = %s, 
@@ -299,6 +307,8 @@ def updateAdmission(id, type, department, dischargeDate, fee, patient, condition
             where AdmissionID = %s
         """, (type_id, dep_id, date, fee, patient, condition, id,))
 
+        conn.commit()
+        return True
     except psycopg2.Error as sqle:
         print(sqle)
         return False
@@ -306,5 +316,3 @@ def updateAdmission(id, type, department, dischargeDate, fee, patient, condition
         print("finally block")
         curs.close()
         conn.close()
-
-    return
