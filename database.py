@@ -59,7 +59,7 @@ def checkLogin(username, password):
         curs.execute("""
                      SELECT *
                      FROM Administrator
-                     WHERE UserName = %s
+                     WHERE lower(UserName) = lower(%s)
                      AND password = %s
                      """, (username, password,))
         row = curs.fetchone()
