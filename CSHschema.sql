@@ -155,11 +155,12 @@ BEGIN
     JOIN Department dep ON (dep.DeptId = ad.Department)
     JOIN Patient p ON (ad.Patient = p.PatientID)
     WHERE
-        LOWER(adT.AdmissionTypeName) LIKE '%' || LOWER(search_term) || '%' OR
+        (LOWER(adT.AdmissionTypeName) LIKE '%' || LOWER(search_term) || '%' OR
         LOWER(dep.DeptName) LIKE '%' || LOWER(search_term) || '%' OR
         LOWER(p.FirstName) LIKE '%' || LOWER(search_term) || '%' OR
         LOWER(p.LastName) LIKE '%' || LOWER(search_term) || '%' OR
-        LOWER(ad.condition) LIKE '%' || LOWER(search_term) || '%'
+        LOWER(ad.condition) LIKE '%' || LOWER(search_term) || '%') AND
+        ad.DischargeDate >= CURRENT_DATE - INTERVAL '2 years'
     ORDER BY
         COALESCE(ad.DischargeDate, '9999-12-31'::DATE) DESC,
         CONCAT(p.FirstName, ' ', p.LastName) ASC;

@@ -90,12 +90,6 @@ def findAdmissionsByAdmin(login):
     try:
         curs = conn.cursor()
         curs.callproc('findAdmissionsByAdmin', [login])
-        # curs.execute("""
-        #     select AdmissionID, AdmissionTypeName, Department, DischargeDate, Fee, concat(FirstName, ' ', LastName) as PatientName, Condition
-        #     from Admission join Patient on (Patient = PatientID) join AdmissionType on (AdmissionType = AdmissionTypeID)
-        #     where Administrator = %s
-        #     order by DischargeDate desc nulls last, PatientName asc, AdmissionType desc
-        # """, (login,))
 
         rows = []
         row = curs.fetchone()
@@ -118,7 +112,6 @@ def findAdmissionsByAdmin(login):
         print(sqle)
         return None
     finally:
-        print("finally block")
         curs.close()
         conn.close()
 
@@ -139,29 +132,6 @@ def findAdmissionsByCriteria(searchString):
         # searchString = f"%{searchString}%"
 
         curs.callproc('findAdmissionsByCriteria', [searchString])
-        # curs.execute("""
-        #             SELECT
-        #                 ad.AdmissionID,
-        #                 adT.AdmissionTypeName,
-        #                 dep.DeptName,
-        #                 TO_CHAR(ad.DischargeDate, 'DD-MM-YYYY') as dis_date,
-        #                 ad.Fee,
-        #                 concat(p.FirstName, ' ', p.LastName) as full_name,
-        #                 ad.condition
-        #             FROM Admission ad
-        #             JOIN AdmissionType adT on (adT.AdmissionTypeID = ad.admissiontype)
-        #             join Department dep on (dep.DeptId = ad.Department)
-        #             join patient p on (ad.Patient = p.PatientID)
-        #             where
-        #                 (lower(adT.AdmissionTypeName) like %s) or
-        #                 (lower(dep.DeptName) like %s) or
-        #                 (lower(p.FirstName) like %s) or
-        #                 (lower(p.LastName) like %s) or
-        #                 (lower(ad.condition) like %s)
-        #             order by
-        #                 to_char(ad.DischargeDate, 'YYYY-MM-DD') desc nulls first,
-        #                 full_name asc
-        #              """, (searchString, searchString, searchString, searchString, searchString,))
 
         rows = []
         row = curs.fetchone()
@@ -181,7 +151,6 @@ def findAdmissionsByCriteria(searchString):
         print("sqle error", sqle)
         return None
     finally:
-        print("finally block")
         curs.close()
         conn.close()
 
@@ -239,7 +208,6 @@ def addAdmission(type, department, patient, condition, admin):
         print(sqle)
         return False
     finally:
-        print("finally block")
         curs.close()
         conn.close()
 
@@ -283,18 +251,8 @@ def updateAdmission(id, type, department, dischargeDate, fee, patient, condition
 
         date = None
         if dischargeDate is not None:
-            print(dischargeDate)
             y = dischargeDate.split('-')
-            # y.reverse()
             date = '/'.join(y)
-            print(date)
-
-        # curs.execute("SET datestyle = 'DMY';")
-        # conn.commit()
-        # curs.execute("""
-        #              Update Admission (AdmissionType, Department, Fee, Patient, Administrator, DischargeDate, Condition) VALUES
-        #             (%s, %s, %s, %s, %s, %s, %s),
-        #              """,(type_id, dep_id, date, fee, patient, condition, id,))
 
         curs.execute("""
             update Admission
@@ -313,6 +271,5 @@ def updateAdmission(id, type, department, dischargeDate, fee, patient, condition
         print(sqle)
         return False
     finally:
-        print("finally block")
         curs.close()
         conn.close()
